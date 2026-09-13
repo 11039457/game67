@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Тёмный Лес | Винтажный рогалик (мягкая музыка)</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #2a1e3a 0%, #0a0618 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', 'Georgia', 'Times New Roman', serif;
+            margin: 0;
+            padding: 16px;
+            position: relative;
+        }
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.6) 100%);
+            z-index: 1;
+        }
+        .game-layout {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 16px;
+            max-width: 1200px;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+        }
+        .left-panel, .right-panel, .top-stats, .action-bar, .souls-floor {
+            background: #1e1a2ed9;
+            backdrop-filter: blur(4px);
+            border: 2px solid #b89a6b;
+            border-radius: 28px;
+            box-shadow: 0 0 0 1px #5e3a2a, inset 0 0 0 1px #ffecb3, 0 6px 16px rgba(0,0,0,0.5);
+            font-family: 'Georgia', serif;
+            position: relative;
+        }
+        .left-panel::before, .right-panel::before, .top-stats::before, .action-bar::before {
+            content: "✧";
+            position: absolute;
+            top: -12px;
+            left: 16px;
+            font-size: 1.2rem;
+            color: #e4c48c;
+            text-shadow: 0 0 4px #a67c2e;
+            background: #1e1a2e;
+            padding: 0 8px;
+            border-radius: 18px;
+        }
+        .left-panel::after, .right-panel::after, .top-stats::after, .action-bar::after {
+            content: "✧";
+            position: absolute;
+            bottom: -12px;
+            right: 16px;
+            font-size: 1.2rem;
+            color: #e4c48c;
+            text-shadow: 0 0 4px #a67c2e;
+            background: #1e1a2e;
+            padding: 0 8px;
+            border-radius: 18px;
+        }
+        .left-panel {
+            padding: 16px;
+            width: 210px;
+            font-size: 0.8rem;
+        }
+        .left-panel h4 {
+            color: #f3da9b;
+            text-align: center;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            border-bottom: 2px dashed #b89a6b;
+            display: inline-block;
+            width: 100%;
+            margin: 0 0 12px 0;
+        }
+        .action-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #0f0c1ccc;
+            padding: 6px 10px;
+            border-radius: 24px;
+            border-left: 3px solid #e4c48c;
+        }
+        .legend-icon {
+            font-size: 1.5rem;
+            width: 38px;
+            text-align: center;
+        }
+        .legend-text {
+            color: #eeddbb;
+            font-size: 0.7rem;
+            line-height: 1.3;
+        }
+        .legend-text strong {
+            color: #ffdd99;
+        }
+        .center-area {
+            flex: 1;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .top-stats {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 10px 18px;
+        }
+        .hero-info, .enemy-info {
+            background: #0a081acc;
+            padding: 6px 14px;
+            border-radius: 24px;
+            text-align: center;
+            flex: 1;
+            border: 1px solid #b48b54;
+        }
+        .hero-info h3, .enemy-info h3 {
+            margin: 0 0 5px 0;
+            color: #f3da9b;
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+        .hero-stats, .enemy-stats {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #eeddbb;
+        }
+        .hero-stats span, .enemy-stats span {
+            color: #ffcc77;
+            font-weight: bold;
+            margin-right: 4px;
+        }
+        .enemy-ability {
+            margin-top: 4px;
+            font-size: 0.6rem;
+            color: #ccaa77;
+        }
+        .ap-bar {
+            margin-top: 4px;
+            font-size: 0.65rem;
+            background: #221f36;
+            border-radius: 18px;
+            padding: 3px 10px;
+            display: inline-block;
+            color: #ffeaac;
+        }
+        #enemyState {
+            background: #eedd99;
+            color: #2a1a3a;
+            font-weight: bold;
+            border-radius: 18px;
+            padding: 3px 10px;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 28px;
+            box-shadow: 0 0 0 4px #b89a6b, 0 10px 20px black;
+            cursor: pointer;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            width: 100%;
+            height: auto;
+            background-color: #0c0820;
+            position: relative;
+        }
+        .music-toggle {
+            position: absolute;
+            top: 16px;
+            right: 22px;
+            z-index: 10;
+            background: #2a2442cc;
+            border: 2px solid #c6a46a;
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f3e0b0;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+        }
+        .music-toggle:hover {
+            transform: scale(1.05);
+            background: #3a3466cc;
+        }
+        .right-panel {
+            padding: 16px;
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+        }
+        .right-panel h4 {
+            color: #f3da9b;
+            text-align: center;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            border-bottom: 2px dashed #b89a6b;
+            margin: 0 0 12px 0;
+        }
+        .history-log {
+            background: #0a081ccc;
+            border-radius: 22px;
+            padding: 10px;
+            height: 380px;
+            overflow-y: auto;
+            font-size: 0.65rem;
+            color: #eeddbb;
+            border: 1px solid #b48b54;
+        }
+        .history-entry {
+            border-left: 3px solid #d4aa6a;
+            padding-left: 8px;
+            margin-bottom: 6px;
+        }
+        .history-entry.enemy {
+            border-left-color: #c97e5a;
+        }
+        .history-entry.heal {
+            border-left-color: #7aaa6a;
+        }
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            padding: 12px 18px;
+            margin-top: 6px;
+        }
+        .action-icon {
+            background: #2a2442;
+            border: 2px solid #c6a46a;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: 0.1s linear;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f3e0b0;
+        }
+        .action-icon:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px black;
+        }
+        .restart-icon {
+            background: #572c3a;
+            border-color: #c4846a;
+        }
+        .upgrade-icon {
+            background: #3a2c5a;
+            border-color: #b48b6a;
+        }
+        .souls-floor {
+            display: flex;
+            gap: 20px;
+            background: #1e1a2ed9;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            color: #eeddbb;
+            justify-content: center;
+            margin-bottom: 2px;
+        }
+        @media (max-width: 800px) {
+            body { padding: 12px; }
+            .game-layout { gap: 12px; }
+            .left-panel, .right-panel { width: 100%; }
+            .action-icon { width: 50px; height: 50px; font-size: 1.5rem; }
+            .music-toggle { top: 12px; right: 16px; width: 36px; height: 36px; font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-layout">
+    <div class="left-panel">
+        <h4>⚜️ ДЕЙСТВИЯ ⚜️</h4>
+        <div class="action-legend">
+            <div class="legend-item"><div class="legend-icon">🍃</div><div class="legend-text"><strong>Лёгкий удар</strong><br>1 AP, обычный урон</div></div>
+            <div class="legend-item"><div class="legend-icon">💥</div><div class="legend-text"><strong>Сильный удар</strong><br>2 AP, урон x1.5</div></div>
+            <div class="legend-item"><div class="legend-icon">🛡️</div><div class="legend-text"><strong>Защита + AP</strong><br>+4 защиты, +2 AP</div></div>
+            <div class="legend-item"><div class="legend-icon">🌀</div><div class="legend-text"><strong>Улучшение</strong><br>6 душ: +атака/защита/здоровье</div></div>
+            <div class="legend-item"><div class="legend-icon">☠️</div><div class="legend-text"><strong>Перерождение</strong><br>начать заново</div></div>
+        </div>
+    </div>
+
+    <div class="center-area">
+        <div class="top-stats">
+            <div class="hero-info">
+                <h3>⚔️ СТРАННИК</h3>
+                <div class="hero-stats">
+                    <div><span>❤️</span> <span id="hpValHero">0</span>/<span id="maxHpHero">0</span></div>
+                    <div><span>⚔️</span> <span id="atkValHero">0</span></div>
+                    <div><span>🛡️</span> <span id="defValHero">0</span></div>
+                    <div><span>⚡</span> <span id="apValHero">0</span>/<span id="maxApHero">0</span></div>
+                </div>
+            </div>
+            <div class="enemy-info">
+                <h3 id="enemyName">❌ ВРАГ</h3>
+                <div class="enemy-stats">
+                    <div><span>❤️</span> <span id="enemyHp">0</span>/<span id="enemyMaxHp">0</span></div>
+                    <div><span>⚔️</span> <span id="enemyAtk">0</span></div>
+                    <div><span>🛡️</span> <span id="enemyDef">0</span></div>
+                </div>
+                <div class="enemy-ability" id="enemyAbility">Способность: --</div>
+                <div class="ap-bar" id="enemyState">⚡ готов</div>
+            </div>
+        </div>
+
+        <div style="position: relative; display: inline-block; width: 100%;">
+            <canvas id="gameCanvas" width="900" height="520"></canvas>
+            <button class="music-toggle" id="musicToggle" title="Вкл/выкл музыку">🔇</button>
+        </div>
+
+        <div class="souls-floor">
+            <div><span>🏆</span> <span id="soulVal">0</span></div>
+            <div><span>🗡️</span> <span id="floorVal">0</span> этаж</div>
+        </div>
+
+        <div class="action-bar">
+            <button class="action-icon" id="lightAttackBtn" title="Лёгкий удар (1 AP)">🍃</button>
+            <button class="action-icon" id="heavyAttackBtn" title="Сильный удар (2 AP)">💥</button>
+            <button class="action-icon" id="defendBtn" title="Защита (+2 AP, +4 защиты)">🛡️</button>
+            <button class="action-icon upgrade-icon" id="upgradeBtn" title="Улучшение (6 душ)">🌀</button>
+            <button class="action-icon restart-icon" id="restartButton" title="Переродиться">☠️</button>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <h4>📜 ХРОНИКИ БОЯ</h4>
+        <div class="history-log" id="historyLog">
+            <div class="history-entry">✨ Добро пожаловать в Тёмный Лес</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ---------- МУЗЫКА (мягкая, загадочная, плавная) ----------
+        let audioCtx = null;
+        let musicGain = null;
+        let isMusicPlaying = false;
+        let musicInterval = null;
+        let isAudioInitialized = false;
+        let delayNode = null;
+
+        function initAudio() {
+            if (isAudioInitialized) return;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // Главный гейн — очень тихий, мягкий фон
+                musicGain = audioCtx.createGain();
+                musicGain.gain.value = 0.06;
+                musicGain.connect(audioCtx.destination);
+                
+                // Мягкая реверберация (деликатное эхо)
+                delayNode = audioCtx.createDelay(2.0);
+                delayNode.delayTime.value = 0.7;
+                const feedback = audioCtx.createGain();
+                feedback.gain.value = 0.28; // мягкое эхо, без «каши»
+                delayNode.connect(feedback);
+                feedback.connect(delayNode);
+                delayNode.connect(audioCtx.destination);
+                
+                isAudioInitialized = true;
+                startMusic();
+                document.getElementById('musicToggle').textContent = '🔊';
+                isMusicPlaying = true;
+            } catch (e) {
+                console.warn('Web Audio не поддерживается');
+            }
+        }
+
+        function startMusic() {
+            if (!audioCtx) return;
+            if (musicInterval) {
+                clearInterval(musicInterval);
+                musicInterval = null;
+            }
+
+            // Плавная, загадочная мелодия в натуральном миноре с гармоническими нотами
+            // C minor: C D Eb F G Ab Bb, с B natural (гармонический) для мистики
+            const notes = [
+                // Фраза 1 — спокойное вступление
+                { freq: 261.63, dur: 0.9 }, // C4
+                { freq: 311.13, dur: 0.9 }, // Eb4
+                { freq: 392.00, dur: 1.1 }, // G4
+                { freq: 466.16, dur: 0.8 }, // Bb4
+                { freq: 415.30, dur: 1.0 }, // Ab4
+                { freq: 392.00, dur: 0.9 }, // G4
+                // Фраза 2 — лёгкое движение вверх
+                { freq: 349.23, dur: 0.8 }, // F4
+                { freq: 311.13, dur: 0.9 }, // Eb4
+                { freq: 293.66, dur: 1.0 }, // D4
+                { freq: 261.63, dur: 1.2 }, // C4
+                // Фраза 3 — развитие, лёгкая грусть
+                { freq: 466.16, dur: 0.9 }, // Bb4
+                { freq: 523.25, dur: 1.0 }, // C5
+                { freq: 622.25, dur: 1.0 }, // Eb5
+                { freq: 587.33, dur: 0.9 }, // D5
+                { freq: 523.25, dur: 1.1 }, // C5
+                { freq: 466.16, dur: 0.9 }, // Bb4
+                // Фраза 4 — возвращение, умиротворение
+                { freq: 415.30, dur: 1.0 }, // Ab4
+                { freq: 392.00, dur: 0.9 }, // G4
+                { freq: 349.23, dur: 1.0 }, // F4
+                { freq: 311.13, dur: 1.1 }, // Eb4
+                { freq: 293.66, dur: 1.0 }, // D4
+                { freq: 261.63, dur: 1.5 }, // C4
+                { freq: 0, dur: 1.2 },       // пауза (тишина для дыхания)
+            ];
+
+            // Плавная функция проигрывания нот
+            function playNotes(startTime, volumeScale = 1.0, useDelay = true) {
+                let t = startTime + 0.5;
+                for (let i = 0; i < notes.length; i++) {
+                    const n = notes[i];
+                    if (n.freq === 0) {
+                        t += n.dur;
+                        continue;
+                    }
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    const vol = 0.055 * volumeScale;
+                    
+                    // Плавная атака (0.4с) и длинное затухание — никаких резких щелчков
+                    gain.gain.setValueAtTime(0.0001, t);
+                    gain.gain.linearRampToValueAtTime(vol, t + 0.4);
+                    gain.gain.linearRampToValueAtTime(0.0001, t + n.dur + 0.5);
+                    
+                    // Только мягкие волны: sine (основной) и triangle (для лёгкого тембра)
+                    osc.type = (i % 4 === 0) ? 'triangle' : 'sine';
+                    osc.frequency.value = n.freq; // без расстройки — чистое, приятное звучание
+                    
+                    osc.connect(gain);
+                    if (useDelay && delayNode) {
+                        gain.connect(delayNode);
+                    } else {
+                        gain.connect(musicGain);
+                    }
+                    osc.start(t);
+                    osc.stop(t + n.dur + 0.6);
+                    t += n.dur + 0.15; // короткие паузы между нотами — плавный поток
+                }
+                return t - startTime;
+            }
+
+            // Основная мелодия
+            let now = audioCtx.currentTime;
+            let totalDur = playNotes(now, 1.0, true);
+
+            // Мягкий бас-дрон (постоянная нота C3 — очень тихая, создаёт атмосферу)
+            const droneFreq = 130.81; // C3
+            const drone = audioCtx.createOscillator();
+            const droneGain = audioCtx.createGain();
+            droneGain.gain.setValueAtTime(0.0001, now);
+            droneGain.gain.linearRampToValueAtTime(0.008, now + 2.0);
+            droneGain.gain.linearRampToValueAtTime(0.0001, now + totalDur + 1.0);
+            drone.type = 'sine';
+            drone.frequency.value = droneFreq;
+            drone.connect(droneGain);
+            droneGain.connect(musicGain);
+            drone.start(now);
+            drone.stop(now + totalDur + 1.5);
+
+            // Тихая гармоническая подложка (квинта выше — создаёт ощущение простора)
+            const padFreq = 196.00; // G3
+            const pad = audioCtx.createOscillator();
+            const padGain = audioCtx.createGain();
+            padGain.gain.setValueAtTime(0.0001, now);
+            padGain.gain.linearRampToValueAtTime(0.004, now + 3.0);
+            padGain.gain.linearRampToValueAtTime(0.0001, now + totalDur + 1.0);
+            pad.type = 'sine';
+            pad.frequency.value = padFreq;
+            pad.connect(padGain);
+            padGain.connect(musicGain);
+            pad.start(now);
+            pad.stop(now + totalDur + 1.5);
+
+            // Периодический повтор (цикл ~20 секунд)
+            let loopDuration = Math.max(totalDur + 3.0, 20);
+            musicInterval = setInterval(() => {
+                if (!isMusicPlaying) return;
+                try {
+                    let now2 = audioCtx.currentTime;
+                    let start = now2 + 0.5;
+                    playNotes(start, 1.0, true);
+                    // Дрон
+                    const d = audioCtx.createOscillator();
+                    const dg = audioCtx.createGain();
+                    dg.gain.setValueAtTime(0.0001, start);
+                    dg.gain.linearRampToValueAtTime(0.008, start + 2.0);
+                    dg.gain.linearRampToValueAtTime(0.0001, start + totalDur + 1.0);
+                    d.type = 'sine';
+                    d.frequency.value = 130.81;
+                    d.connect(dg);
+                    dg.connect(musicGain);
+                    d.start(start);
+                    d.stop(start + totalDur + 1.5);
+                    // Пад
+                    const p = audioCtx.createOscillator();
+                    const pg = audioCtx.createGain();
+                    pg.gain.setValueAtTime(0.0001, start);
+                    pg.gain.linearRampToValueAtTime(0.004, start + 3.0);
+                    pg.gain.linearRampToValueAtTime(0.0001, start + totalDur + 1.0);
+                    p.type = 'sine';
+                    p.frequency.value = 196.00;
+                    p.connect(pg);
+                    pg.connect(musicGain);
+                    p.start(start);
+                    p.stop(start + totalDur + 1.5);
+                } catch (e) {}
+            }, Math.floor(loopDuration * 1000));
+        }
+
+        function toggleMusic() {
+            if (!isAudioInitialized) {
+                initAudio();
+                return;
+            }
+            if (isMusicPlaying) {
+                isMusicPlaying = false;
+                if (musicInterval) {
+                    clearInterval(musicInterval);
+                    musicInterval = null;
+                }
+                document.getElementById('musicToggle').textContent = '🔇';
+                if (musicGain) musicGain.gain.value = 0;
+            } else {
+                isMusicPlaying = true;
+                if (musicGain) musicGain.gain.value = 0.06;
+                document.getElementById('musicToggle').textContent = '🔊';
+                if (audioCtx) {
+                    startMusic();
+                } else {
+                    initAudio();
+                }
+            }
+        }
+
+        // Первый клик для инициализации
+        function firstClickHandler() {
+            if (!isAudioInitialized) {
+                initAudio();
+            }
+            document.removeEventListener('click', firstClickHandler);
+            document.removeEventListener('touchstart', firstClickHandler);
+        }
+        document.addEventListener('click', firstClickHandler);
+        document.addEventListener('touchstart', firstClickHandler);
+
+        // ---------- ОСТАЛЬНОЙ КОД ИГРЫ (без изменений) ----------
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        
+        let auroraOffset = 0;
+        function drawAurora() {
+            const width = canvas.width;
+            const height = canvas.height;
+            for (let i = 0; i < 5; i++) {
+                const grad = ctx.createLinearGradient(0, 50 + i * 35, width, 120 + i * 30);
+                const hue = (Date.now() * 0.0015 + i * 40) % 360;
+                const color1 = `hsla(${hue}, 80%, 50%, 0.25)`;
+                const color2 = `hsla(${hue + 35}, 85%, 45%, 0.2)`;
+                grad.addColorStop(0, color1);
+                grad.addColorStop(0.5, color2);
+                grad.addColorStop(1, color1);
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.moveTo(0, 80 + i * 25 + Math.sin(auroraOffset + i) * 18);
+                ctx.quadraticCurveTo(width * 0.3, 60 + i * 20 + Math.cos(auroraOffset * 0.7 + i) * 14, width, 100 + i * 30 + Math.sin(auroraOffset * 1.2 + i) * 20);
+                ctx.lineTo(width, 180 + i * 20);
+                ctx.lineTo(0, 150 + i * 30);
+                ctx.fill();
+            }
+            auroraOffset += 0.015;
+        }
+        
+        let gameRunning = true;
+        let currentFloor = 1;
+        let player = {
+            maxHp: 45, hp: 45, baseAtk: 8, baseDef: 5, maxAp: 4, ap: 4, souls: 0,
+            bonusAtk: 0, bonusDef: 0, bonusMaxHp: 0
+        };
+        let currentEnemy = null;
+        let enemyCharge = 0;
+        
+        let shakeOffset = { hero: 0, enemy: 0 };
+        let floatingNumbers = [];
+        let historyEntries = [];
+        
+        function addHistory(msg, type = 'normal') {
+            historyEntries.unshift({ msg, type });
+            if (historyEntries.length > 20) historyEntries.pop();
+            renderHistory();
+        }
+        function renderHistory() {
+            const logDiv = document.getElementById('historyLog');
+            logDiv.innerHTML = '';
+            for (let entry of historyEntries.slice(0, 20)) {
+                const div = document.createElement('div');
+                div.className = `history-entry ${entry.type}`;
+                div.textContent = entry.msg;
+                logDiv.appendChild(div);
+            }
+        }
+        function setLog(msg, type = 'normal') { addHistory(msg, type); }
+        
+        function addFloatingNumber(x, y, value, isEnemy, isHeal = false) {
+            floatingNumbers.push({ x, y, value, life: 1.0, isEnemy, isHeal, yOffset: 0 });
+        }
+        
+        function updateEffects() {
+            for(let i=0; i<floatingNumbers.length; i++) {
+                floatingNumbers[i].life -= 0.012;
+                floatingNumbers[i].yOffset = (1 - floatingNumbers[i].life) * 45;
+                if(floatingNumbers[i].life <= 0) {
+                    floatingNumbers.splice(i,1);
+                    i--;
+                }
+            }
+            if(shakeOffset.hero !== 0) shakeOffset.hero *= 0.88;
+            if(Math.abs(shakeOffset.hero) < 0.3) shakeOffset.hero = 0;
+            if(shakeOffset.enemy !== 0) shakeOffset.enemy *= 0.88;
+            if(Math.abs(shakeOffset.enemy) < 0.3) shakeOffset.enemy = 0;
+        }
+        
+        function shakeCharacter(which, intensity = 6) {
+            if(which === 'hero') shakeOffset.hero = intensity;
+            if(which === 'enemy') shakeOffset.enemy = intensity;
+        }
+        
+        function drawBackgroundAndFloor() {
+            let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            grad.addColorStop(0, '#1a1535');
+            grad.addColorStop(0.5, '#2a2250');
+            grad.addColorStop(1, '#0f0a20');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            for(let i=0; i<150; i++) {
+                ctx.fillStyle = `rgba(230, 210, 180, ${Math.random() * 0.4 + 0.1})`;
+                ctx.fillRect(10 + i*13, 20 + (i*5) % 150, 2, 2);
+            }
+            ctx.fillStyle = '#e6d5a8';
+            ctx.beginPath();
+            ctx.arc(canvas.width-60, 65, 22, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#cbb88e';
+            ctx.beginPath();
+            ctx.arc(canvas.width-55, 60, 18, 0, Math.PI*2);
+            ctx.fill();
+            drawAurora();
+            ctx.fillStyle = '#2a2345';
+            ctx.fillRect(0, canvas.height-55, canvas.width, 55);
+            for(let i=0; i<canvas.width; i+=18) {
+                ctx.fillStyle = (Math.floor(i/18)%2===0) ? '#3d2e66' : '#4c3a7a';
+                ctx.fillRect(i, canvas.height-55, 18, 55);
+                ctx.fillStyle = '#a282b0';
+                ctx.fillRect(i+5, canvas.height-60, 4, 10);
+            }
+        }
+        
+        function updateUI() {
+            document.getElementById('hpValHero').innerText = player.hp;
+            document.getElementById('maxHpHero').innerText = player.maxHp;
+            document.getElementById('atkValHero').innerText = player.baseAtk + player.bonusAtk;
+            document.getElementById('defValHero').innerText = player.baseDef + player.bonusDef;
+            document.getElementById('apValHero').innerText = player.ap;
+            document.getElementById('maxApHero').innerText = player.maxAp;
+            document.getElementById('soulVal').innerText = player.souls;
+            document.getElementById('floorVal').innerText = currentFloor;
+            if(currentEnemy) {
+                document.getElementById('enemyName').innerHTML = `👤 ${currentEnemy.name}`;
+                document.getElementById('enemyHp').innerText = currentEnemy.hp;
+                document.getElementById('enemyMaxHp').innerText = currentEnemy.maxHp;
+                document.getElementById('enemyAtk').innerText = currentEnemy.atk;
+                document.getElementById('enemyDef').innerText = currentEnemy.def;
+                document.getElementById('enemyAbility').innerHTML = `💀 ${currentEnemy.ability}`;
+                document.getElementById('enemyState').innerHTML = enemyCharge > 0 ? `⚠️ готовит мощный удар!` : `⚡ готов атаковать`;
+            }
+        }
+        
+        function generateEnemy() {
+            let baseHp = 30 + (currentFloor - 1) * 6;
+            let hp = Math.max(30, baseHp);
+            let atk = Math.min(35, 7 + Math.floor(currentFloor * 1.2));
+            let def = Math.min(12, 3 + Math.floor(currentFloor * 0.6));
+            const enemyNames = ["Лесной Палач", "Теневой Рыцарь", "Гнилой Мечник", "Ночной Жнец", "Вурдалак", "Пепельный Воин", "Костяной Страж"];
+            const prefix = ["Мрачный", "Безликий", "Хладный", "Скверный", "Проклятый"];
+            let name = `${prefix[Math.floor(Math.random()*prefix.length)]} ${enemyNames[Math.floor(Math.random()*enemyNames.length)]}`;
+            let ability = "", effect = null;
+            let r = Math.random();
+            if(r < 0.3) { ability = "Тяжёлый удар"; effect = "charge"; }
+            else if(r < 0.55) { ability = "Кровоточащая рана"; effect = "bleed"; }
+            else { ability = "Быстрый выпад"; effect = "none"; }
+            return {
+                name, hp, maxHp: hp, atk, def,
+                ability, abilityEffect: effect, bleedCounter: 0
+            };
+        }
+        
+        function spawnNewEnemy() {
+            currentEnemy = generateEnemy();
+            enemyCharge = 0;
+            setLog(`⚔️ Противник: ${currentEnemy.name} (❤️${currentEnemy.hp} ⚔️${currentEnemy.atk} 🛡️${currentEnemy.def}) — ${currentEnemy.ability}`, 'enemy');
+            updateUI();
+            drawGame();
+        }
+        
+        function checkVictory() {
+            if(currentEnemy.hp <= 0) {
+                let reward = Math.floor(8 + currentFloor * 0.8) + Math.floor(Math.random() * 5);
+                player.souls += reward;
+                setLog(`🏆 Победа! +${reward} душ. Глубина ${currentFloor} → ${currentFloor+1}`, 'normal');
+                currentFloor++;
+                let healAmount = Math.floor(player.maxHp * 0.3) + 5;
+                player.hp = Math.min(player.maxHp, player.hp + healAmount);
+                setLog(`🌿 Лес лечит: +${healAmount} HP`, 'heal');
+                updateUI();
+                spawnNewEnemy();
+                drawGame();
+                return true;
+            }
+            return false;
+        }
+        
+        function enemyTurn() {
+            if(!gameRunning || !currentEnemy || currentEnemy.hp <= 0) return false;
+            if(currentEnemy.bleedCounter > 0) {
+                let bleedDmg = currentEnemy.bleedCounter;
+                player.hp = Math.max(0, player.hp - bleedDmg);
+                setLog(`🩸 Кровотечение: -${bleedDmg} HP`, 'enemy');
+                currentEnemy.bleedCounter = 0;
+                updateUI();
+                if(player.hp <= 0) { gameOver(); return true; }
+            }
+            let dmg = currentEnemy.atk;
+            if(enemyCharge > 0) {
+                dmg = Math.floor(dmg * 1.8);
+                setLog(`💢 ${currentEnemy.name} наносит МОЩНЫЙ УДАР!`, 'enemy');
+                enemyCharge = 0;
+            } else {
+                if(currentEnemy.abilityEffect === "charge" && Math.random() < 0.5) {
+                    enemyCharge = 1;
+                    setLog(`⚠️ ${currentEnemy.name} готовит сильную атаку!`, 'enemy');
+                    drawGame();
+                    return false;
+                }
+                setLog(`🌙 ${currentEnemy.name} атакует!`, 'enemy');
+            }
+            let totalDef = player.baseDef + player.bonusDef;
+            let reduced = Math.max(1, dmg - Math.floor(totalDef * 0.5));
+            if(currentEnemy.abilityEffect === "bleed" && Math.random() < 0.4) {
+                currentEnemy.bleedCounter = 3;
+                setLog(`🩸 ${currentEnemy.name} вызывает кровотечение!`, 'enemy');
+            }
+            player.hp = Math.max(0, player.hp - reduced);
+            setLog(`-${reduced} HP`, 'enemy');
+            updateUI();
+            shakeCharacter('hero', 6);
+            addFloatingNumber(100, canvas.height-170, reduced, false);
+            if(player.hp <= 0) { gameOver(); return true; }
+            return false;
+        }
+        
+        function tryAction(apCost, actionCallback) {
+            if(!gameRunning) { setLog("Игра окончена, переродись!"); return false; }
+            if(!currentEnemy || currentEnemy.hp <= 0) { setLog("Нет врага! Подождите..."); return false; }
+            if(apCost > 0 && player.ap < apCost) {
+                setLog(`Не хватает энергии! Нужно ${apCost} AP. Используй Защиту.`);
+                return false;
+            }
+            if(apCost > 0) player.ap -= apCost;
+            actionCallback();
+            updateUI();
+            drawGame();
+            if(gameRunning && currentEnemy && currentEnemy.hp > 0) {
+                enemyTurn();
+                updateUI();
+                drawGame();
+                if(player.hp <= 0) gameOver();
+            }
+            return true;
+        }
+        
+        function lightAttack() {
+            tryAction(1, () => {
+                let dmg = Math.max(1, (player.baseAtk+player.bonusAtk) - Math.floor(currentEnemy.def * 0.4));
+                if(Math.random() < 0.1) { dmg = Math.floor(dmg * 1.4); setLog(`✨ Лёгкий критический удар!`, 'normal'); }
+                currentEnemy.hp -= dmg;
+                setLog(`🍃 Лёгкий удар наносит ${dmg} урона.`, 'normal');
+                shakeCharacter('enemy', 5);
+                addFloatingNumber(canvas.width-140, canvas.height-170, dmg, true);
+                checkVictory();
+            });
+        }
+        
+        function heavyAttack() {
+            tryAction(2, () => {
+                let dmg = Math.max(2, (player.baseAtk+player.bonusAtk) * 1.5 - Math.floor(currentEnemy.def * 0.3));
+                if(Math.random() < 0.2) { dmg = Math.floor(dmg * 1.5); setLog(`💥 ОГЛУШИТЕЛЬНЫЙ УДАР!`, 'normal'); }
+                currentEnemy.hp -= dmg;
+                setLog(`💥 Сильный удар наносит ${dmg} урона.`, 'normal');
+                shakeCharacter('enemy', 8);
+                addFloatingNumber(canvas.width-140, canvas.height-170, dmg, true);
+                checkVictory();
+            });
+        }
+        
+        function defendAction() {
+            if(!gameRunning) { setLog("Игра окончена, переродись!"); return; }
+            if(!currentEnemy || currentEnemy.hp <= 0) { setLog("Нет врага!"); return; }
+            let oldDef = player.baseDef;
+            player.baseDef += 4;
+            let apGain = 2;
+            let newAp = Math.min(player.maxAp, player.ap + apGain);
+            let gained = newAp - player.ap;
+            player.ap = newAp;
+            setLog(`🛡️ Стойка защиты! Защита +4, восстановлено ${gained} AP.`, 'normal');
+            setTimeout(() => { if(gameRunning) player.baseDef = oldDef; }, 100);
+            updateUI();
+            drawGame();
+            if(gameRunning && currentEnemy && currentEnemy.hp > 0) {
+                enemyTurn();
+                updateUI();
+                drawGame();
+                if(player.hp <= 0) gameOver();
+            }
+        }
+        
+        function upgradeCharacter() {
+            if(!gameRunning) return;
+            if(player.souls >= 6) {
+                player.souls -= 6;
+                let c = prompt("🌀 ВЫБЕРИ УЛУЧШЕНИЕ:\n1. +4 АТАКИ\n2. +3 ЗАЩИТЫ\n3. +10 ЗДОРОВЬЯ и +1 AP");
+                if(c==='1') { player.bonusAtk += 4; setLog("⚔️ +4 атаки", 'normal'); }
+                else if(c==='2') { player.bonusDef += 3; setLog("🛡️ +3 защиты", 'normal'); }
+                else if(c==='3') { player.bonusMaxHp += 10; player.maxHp += 10; player.hp += 10; player.maxAp += 1; player.ap += 1; setLog("❤️ +10 здоровья, +1 AP", 'heal'); }
+                else { player.souls += 6; setLog("❌ Отмена"); return; }
+                updateUI(); drawGame();
+            } else setLog(`Не хватает душ: ${player.souls}/6`);
+        }
+        
+        function restartGame() {
+            gameRunning = true;
+            currentFloor = 1;
+            player = { maxHp:45, hp:45, baseAtk:8, baseDef:5, maxAp:4, ap:4, souls:0, bonusAtk:0, bonusDef:0, bonusMaxHp:0 };
+            currentEnemy = null;
+            enemyCharge = 0;
+            historyEntries = [];
+            setLog("✨ Ты переродился. Используй энергию с умом!", 'normal');
+            spawnNewEnemy();
+            updateUI();
+            drawGame();
+        }
+        
+        function gameOver() {
+            if(!gameRunning) return;
+            gameRunning = false;
+            setLog(`💀 ПОРАЖЕНИЕ на этаже ${currentFloor}. Нажми "Переродиться".`, 'enemy');
+            drawGame(true);
+        }
+        
+        // ---------- ОТРИСОВКА ПЕРСОНАЖЕЙ ----------
+        function drawHeroFull(x, y, shake) {
+            let dx = shake;
+            ctx.save(); ctx.translate(dx, 0);
+            ctx.fillStyle = '#3f78b0'; ctx.fillRect(x+5, y+20, 85, 95);
+            ctx.fillStyle = '#2d5b8c'; ctx.fillRect(x+10, y+25, 75, 85);
+            ctx.fillStyle = '#4a86c2'; ctx.fillRect(x+15, y+50, 65, 50);
+            ctx.fillStyle = '#f7e0b0'; ctx.fillRect(x+15, y-15, 65, 42);
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(x+25, y-5, 14, 10); ctx.fillRect(x+55, y-5, 14, 10);
+            ctx.fillStyle = '#2c2c2c'; ctx.fillRect(x+30, y-2, 6, 6); ctx.fillRect(x+60, y-2, 6, 6);
+            ctx.fillStyle = '#5a3e2a'; ctx.fillRect(x+23, y-9, 18, 4); ctx.fillRect(x+53, y-9, 18, 4);
+            ctx.fillStyle = '#8b5a3c'; ctx.fillRect(x+38, y+10, 18, 5); ctx.fillRect(x+41, y+15, 12, 3);
+            ctx.fillStyle = '#c9a87b'; ctx.fillRect(x+18, y+2, 10, 7); ctx.fillRect(x+66, y+2, 10, 7);
+            ctx.fillStyle = '#6a8754'; ctx.fillRect(x+13, y-22, 68, 10); ctx.fillStyle = '#8ab86a'; ctx.fillRect(x+18, y-26, 58, 7);
+            ctx.fillStyle = '#c0d4e8'; ctx.fillRect(x+88, y+40, 12, -75); ctx.fillStyle = '#eebe6e'; ctx.fillRect(x+90, y+40, 8, 12);
+            ctx.fillStyle = '#aa8c54'; ctx.fillRect(x+84, y+38, 20, 5); ctx.fillStyle = '#7a6a40'; ctx.fillRect(x+92, y+32, 6, 10);
+            ctx.fillStyle = '#5d4a2e'; ctx.fillRect(x+15, y+110, 22, 25); ctx.fillRect(x+55, y+110, 22, 25);
+            ctx.fillStyle = '#7d6238'; ctx.fillRect(x+17, y+132, 18, 12); ctx.fillRect(x+57, y+132, 18, 12);
+            ctx.fillStyle = '#b07d48'; ctx.fillRect(x+0, y+35, 14, 28); ctx.fillRect(x+80, y+35, 14, 28);
+            ctx.restore();
+        }
+        function drawEnemyFull(x, y, shake) {
+            let dx = shake;
+            ctx.save(); ctx.translate(dx, 0);
+            ctx.fillStyle = '#4a3422'; ctx.fillRect(x+5, y+20, 85, 95);
+            ctx.fillStyle = '#342210'; ctx.fillRect(x+10, y+25, 75, 85);
+            ctx.fillStyle = '#5e3f28'; ctx.fillRect(x+15, y+50, 65, 50);
+            ctx.fillStyle = '#cfaa7a'; ctx.fillRect(x+15, y-15, 65, 42);
+            ctx.fillStyle = '#2d1e12'; ctx.fillRect(x+25, y-5, 14, 10); ctx.fillRect(x+55, y-5, 14, 10);
+            ctx.fillStyle = '#ff6644'; ctx.fillRect(x+29, y-2, 5, 5); ctx.fillRect(x+59, y-2, 5, 5);
+            ctx.fillStyle = '#1a0f07'; ctx.fillRect(x+23, y-10, 18, 5); ctx.fillRect(x+53, y-10, 18, 5);
+            ctx.fillStyle = '#64210e'; ctx.fillRect(x+36, y+10, 22, 6); ctx.fillStyle='#d9a066'; ctx.fillRect(x+40,y+11,5,4); ctx.fillRect(x+49,y+11,5,4);
+            ctx.fillStyle = '#ac8462'; ctx.fillRect(x+18, y+2, 10, 7); ctx.fillRect(x+66, y+2, 10, 7);
+            ctx.fillStyle = '#bb5a3a'; ctx.fillRect(x+70, y+4, 7, 4);
+            ctx.fillStyle = '#5e4c32'; ctx.fillRect(x+13, y-22, 68, 10); ctx.fillStyle='#7e684a'; ctx.fillRect(x+35, y-32, 24, 14); ctx.fillRect(x+22, y-28, 12, 10); ctx.fillRect(x+60, y-28, 12, 10);
+            ctx.fillStyle = '#5a6e7c'; ctx.fillRect(x-12, y+40, 12, -75); ctx.fillStyle = '#3a2a1a'; ctx.fillRect(x-10, y+40, 8, 12);
+            ctx.fillStyle = '#4a3a2a'; ctx.fillRect(x-16, y+38, 20, 5); ctx.fillStyle = '#2a1a0a'; ctx.fillRect(x-8, y+32, 6, 10);
+            ctx.fillStyle = '#332211'; ctx.fillRect(x+15, y+110, 22, 25); ctx.fillRect(x+55, y+110, 22, 25);
+            ctx.fillStyle = '#5a4028'; ctx.fillRect(x+17, y+132, 18, 12); ctx.fillRect(x+57, y+132, 18, 12);
+            ctx.fillStyle = '#6b4e32'; ctx.fillRect(x-2, y+35, 14, 30); ctx.fillRect(x+82, y+35, 14, 30);
+            ctx.fillStyle = '#aa6e42'; ctx.fillRect(x-6, y+38, 8, 8); ctx.fillRect(x+92, y+38, 8, 8);
+            ctx.restore();
+        }
+        
+        function drawFloatingNumbers() {
+            for(let n of floatingNumbers) {
+                let alpha = Math.min(1, n.life * 1.5);
+                let scale = 1 + (1 - n.life) * 0.6;
+                let fontSize = Math.floor(28 * scale);
+                ctx.font = `bold ${fontSize}px "Courier New", monospace`;
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = "black";
+                let grad = ctx.createLinearGradient(n.x-10, n.y - n.yOffset, n.x+10, n.y - n.yOffset - 15);
+                if(n.isHeal) {
+                    grad.addColorStop(0, `rgba(80, 255, 100, ${alpha})`);
+                    grad.addColorStop(1, `rgba(50, 200, 80, ${alpha})`);
+                    ctx.fillStyle = grad;
+                    ctx.fillText(`+${n.value}`, n.x - 15, n.y - n.yOffset);
+                } else if(n.isEnemy) {
+                    grad.addColorStop(0, `rgba(255, 100, 50, ${alpha})`);
+                    grad.addColorStop(1, `rgba(255, 200, 80, ${alpha})`);
+                    ctx.fillStyle = grad;
+                    ctx.fillText(`-${n.value}`, n.x - 15, n.y - n.yOffset);
+                } else {
+                    grad.addColorStop(0, `rgba(255, 80, 40, ${alpha})`);
+                    grad.addColorStop(1, `rgba(255, 180, 80, ${alpha})`);
+                    ctx.fillStyle = grad;
+                    ctx.fillText(`-${n.value}`, n.x - 15, n.y - n.yOffset);
+                }
+                ctx.shadowBlur = 0;
+            }
+        }
+        
+        function drawGame(gameOverFlag = false) {
+            if(!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.imageSmoothingEnabled = false;
+            drawBackgroundAndFloor();
+            let heroY = canvas.height-195;
+            let enemyY = canvas.height-195;
+            let heroX = 30;
+            let enemyX = canvas.width-155;
+            let heroShake = shakeOffset.hero * (Math.random() - 0.5) * 2;
+            let enemyShake = shakeOffset.enemy * (Math.random() - 0.5) * 2;
+            drawHeroFull(heroX, heroY, heroShake);
+            if(currentEnemy && gameRunning) drawEnemyFull(enemyX, enemyY, enemyShake);
+            else if(currentEnemy) drawEnemyFull(enemyX, enemyY, enemyShake);
+            drawFloatingNumbers();
+            if(gameOverFlag || !gameRunning) {
+                ctx.fillStyle = "rgba(0,0,0,0.85)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.font = "bold 32px 'Georgia', serif";
+                ctx.fillStyle = "#E0714A";
+                ctx.fillText("☠️ ПОГИБЕЛЬ ☠️", canvas.width/2-130, canvas.height/2);
+                ctx.font = "18px monospace";
+                ctx.fillStyle = "#D6B17E";
+                ctx.fillText("нажми 'ПЕРЕРОДИТЬСЯ'", canvas.width/2-110, canvas.height/2+50);
+            }
+        }
+        
+        function animate() {
+            updateEffects();
+            drawGame();
+            requestAnimationFrame(animate);
+        }
+        
+        function init() {
+            restartGame();
+            document.getElementById('lightAttackBtn').onclick = lightAttack;
+            document.getElementById('heavyAttackBtn').onclick = heavyAttack;
+            document.getElementById('defendBtn').onclick = defendAction;
+            document.getElementById('upgradeBtn').onclick = upgradeCharacter;
+            document.getElementById('restartButton').onclick = restartGame;
+            document.getElementById('musicToggle').onclick = toggleMusic;
+            animate();
+        }
+        init();
+    })();
+</script>
+</body>
+</html>
